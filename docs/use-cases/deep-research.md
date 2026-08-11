@@ -28,3 +28,11 @@ v0.1 范围严格圈定为 A 类目标域（单文件 config / SKILL.md / prompt
 **v0.1 不挂任何与 deep-research 相关的 ticket**——具体见 `specs/v0.1-skeleton-spec.md` 修订后的 D6 / User Stories。
 
 deep-research 真上车时（v0.2 评估）：启用 ADR-001 的扩展 3 件（Worktrees / Plugins / Sub-agents 派发），改 C 类下骨架。
+
+## v0.2 评估时复核
+
+下列问题应在 v0.2 评估时复核（不是 v0.1 范围）：
+
+1. v0.1 跑通的 A 类骨架能否扩展到 C 类——启用扩展 3 件后，spec D4 文件树的变化如何
+2. deep-research 团队是否还有"待优化"空间——之前已两轮手工优化（omega-opt），第三轮 ROI 如何
+3. deep-research 候选 Score 维度——30min→≤10min 时间成本 / 产出质量 / 多 agent 协作效率，哪些进入 v0.2 范围的 v0.2-specific 维度
