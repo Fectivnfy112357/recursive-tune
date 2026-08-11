@@ -1,7 +1,7 @@
 # ADR-004 · Meta 层契约（v0.1 承诺，v0.2 执行）
 
 **状态**：提议（2026-08-11 arch-pivot 引入）
-**关联**：ADR-001（骨架 + 两集合机制）、CONTEXT.md（两层递归愿景）
+**关联**：ADR-001（骨架 + 两集合机制）、ADR-002（git ratchet 机制——meta 与第一层共享 ratchet）、CONTEXT.md（两层递归愿景）
 
 ---
 
@@ -34,7 +34,7 @@ CONTEXT.md 把 recursive-tune 定位为带"两层递归"的通用框架：
 
 不把骨架代码（未来的 `scripts/*.py`）作为 meta Target——v0.2 范围再评估。
 
-### Meta 层的 Score（3 维，全部硬指标）
+### Meta 层的 Score（**候选 3 维——v0.2 锁定**，当前草拟、v0.2 落地前可重新评估）
 
 | 维度 | 信号 | 类型 |
 |---|---|---|
@@ -59,8 +59,8 @@ CONTEXT.md 把 recursive-tune 定位为带"两层递归"的通用框架：
 
 - **v0.1 文档级承诺已落地**——本 ADR 写明 meta Target / Score / 共享 ratchet 契约
 - **v0.2 才有可执行骨架**——具体 runtime 工具（脚本 / CI / lint 规则）v0.2 决定
-- **CONTEXT.md「两层递归」段加注**——"v0.1 仅承诺 meta 层契约，可执行骨架 v0.2"（commit 4a 完成）
-- **Glossary 待补 2 词**（commit 4a 完成）：
+- 已在本轮同步补全 `CONTEXT.md`「两层递归」段加注（"v0.1 仅承诺 meta 层契约，可执行骨架 v0.2"）
+- **Glossary 待补 2 词**（commit 4a 已落）：
   - **Iteration Boundary**：meta 跨版本回滚的粒度——一次 commit 是一次 iteration 还是一个 ADR 是一次？v0.2 决定。
   - **Meta Score Validity**：meta Score 不能仅靠 meta 自身产出验证——必须由第一层独立验证（否则 circular）。v0.2 决定具体机制。
 

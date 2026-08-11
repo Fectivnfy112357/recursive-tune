@@ -20,12 +20,12 @@ deep-research 历史文件清单已迁移至 `docs/use-cases/deep-research.md`�
 
 ## 决策（2026-08-11 修订）
 
-**v0.1 不绑首目标，deep-research 推迟到 v0.2 重新评估是否上车。**
+**v0.1 锚点 = 假 Target demo 跑通（A 类下）；不绑真实 first target，deep-research 推迟到 v0.2 重新评估是否上车。**
 
 理由：
-1. **v0.1 锚点改 A 类**——A 类（单文件 config / SKILL.md / prompt）有现成的硬指标、能用假 Target demo 跑通；deep-research 是 C 类（multi-file / multi-agent 流水线），其验证锚点与 v0.1 6 件套子类（4 件实例化）不相容
+1. **v0.1 锚点改 A 类**——A 类（单文件 config / SKILL.md / prompt）有现成的硬指标、能用假 Target demo 跑通；deep-research 是 C 类（multi-file / multi-agent 流水线），其验证锚点与 v0.1 扩展集合（核心 4 件实例化）不相容
 2. **避免 v0.1 spec 与 ADR-001 决策锚点脱节**——原版"首目标是 deep-research（C 类）" + v0.1 spec 的 A 类骨架会形成"骨架不验证首目标"的悬空决策
-3. **deep-research 现状不应被破坏**——之前两轮优化尝试是手工的（omega-opt），本框架是循环的；v0.1 不动 deep-research，v0.2 评估"是否用车"再决定
+3. **deep-research 现状不应被破坏**——之前两轮优化尝试是手工的（omega-opt），本框架是循环的；v0.1 不动 deep-research，v0.2 评估"是否上车"再决定
 
 诊断范围（在 v0.2 阶段）：current deep-research 有什么可量化 Score、Writer / Judge 如何隔离、State 怎么持久化。
 
@@ -47,7 +47,7 @@ deep-research 历史文件清单已迁移至 `docs/use-cases/deep-research.md`�
 
 ## v0.2 阶段交付物（占位，不在本 ADR 决策）
 
-> 以下是"如果 v0.2 评估说'能做'，下一步要交付什么"——**不在本 ADR 范围**，留作占位
+> 以下是"如果 v0.2 评估说'能做'，下一步要交付什么"——**不在本 ADR 范围**，留作占位；占位路径，实际目录 / 文件名以 v0.2 评估时为准
 
 - `deep-research/program.md`（基于现有 v3 spec 写一份给 agent 的指令）
 - `deep-research/scoring.yaml`（C 类 Score 维度定义）
@@ -91,7 +91,7 @@ deep-research 历史文件清单已迁移至 `docs/use-cases/deep-research.md`�
 
 按 ADR-001 的实例化机制，**A 类下骨架只实例化核心 4 件**：
 - Target
-- 物理隔离（writer / judge 两个独立 Hermes profile）
+- 隔离约定（profile 级，writer / judge 两个独立 Hermes profile）
 - Ratchet + State
 - Program 模板
 

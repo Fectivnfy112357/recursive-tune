@@ -1,7 +1,7 @@
 # ADR-002 · Ratchet 替代覆盖式写入
 
 **状态**：提议
-**关联**：ADR-001（Loop Engineering 骨架）
+**关联**：ADR-001（Loop Engineering 骨架）、ADR-004（meta 层契约——meta 与第一层共享 git ratchet）
 
 ---
 
