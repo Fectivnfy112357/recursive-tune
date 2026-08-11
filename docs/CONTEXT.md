@@ -35,13 +35,17 @@
 | **C 类目标域** | multi-file / multi-agent 流水线（如 deep-research kanban） | v0.2 才上车 |
 | **Loop（循环）** | 一轮「改 → 跑 → 评分 → 决定保留/回滚」 | autoresearch 的实验循环 |
 | **Iteration（一轮迭代）** | 一次完整的 Loop 走完 | autoresearch 的一次 commit |
-| **Ratchet（棘轮）** | 只升不降的版本控制：分数只能上不能下，下来就回滚 | autoresearch 的 git revert 机制 |
+| **Ratchet（棘轮）** | 只升不降的版本控制机制——分数只能上不能下，下来就回滚。**v0.1 实现 = git ratchet**（见 ADR-002） | autoresearch 的 git revert 机制 |
 | **Score（评分）** | 可量化的改进指标。**硬指标为主**（测试通过率、recall 噪音率），LLM judge 为辅 | autoresearch 的 `val_bpb`、darwin-skill 的 9 维加权总分 |
-| **Judge（评审员）** | 负责打分的 agent / 脚本。**与 writer 物理隔离**（不让自己评自己） | darwin-skill 的物理隔离 writer/judge |
-| **Writer（写手）** | 负责改 Target 的 agent | autoresearch 里的那个 loop agent |
+| **Hard Signal（硬信号）** | 可由命令直接量化的 signal（如 `pytest` exit code、`grep` 命中数）——必须有，否则 Score 不稳 | darwin-skill 的硬指标主导 |
+| **Soft Signal（软信号）** | LLM judge 输出的 signal——可解释但有噪声，必须配 hard signal 才稳定 | darwin-skill 的 9 维加权里的 soft 维度 |
+| **Judge（评审员）** | 负责打分的 agent / 脚本。见「隔离约定（profile 级）」 | darwin-skill 的独立 judge |
+| **Writer（写手）** | 负责改 Target 的 agent。见「隔离约定（profile 级）」 | autoresearch 里的那个 loop agent |
+| **隔离约定（profile 级）** | Writer 和 Judge 之间互不可见；v0.1 用两个独立 Hermes profile 实现（不同 state.db / 不同 skills 可见集 / 不同 plugin 加载），**共享文件系统与 API quota**。**不是字面意义的物理隔离**——darwin-skill 字面意义的"物理隔离"在 v0.1 不强制 | darwin-skill 的物理隔离 writer/judge |
+| **Program 模板** | agent 任务指令模板（基于 autoresearch 的 `program.md` 思路）；v0.1 实例化为 A 类目标无感知占位版（详见 `specs/v0.1-skeleton-spec.md` D2） | autoresearch 的 `program.md` |
 | **Checkpoint（人在回路节点）** | Loop 在某些关键决策点强制暂停，等人确认才继续 | darwin-skill 的阶段暂停 |
-| **State（状态文件）** | 跨 iteration 持久化的产物：哪些已试、哪些失败、当前 best score | Loop Engineering 的 State（Linear / markdown） |
-| **Worktree（工作树）** | 多个并行 loop 不冲突文件 | Loop Engineering 的 Worktrees |
+| **State（状态文件）** | 跨 iteration 持久化的产物：哪些已试、哪些失败、当前 best score。**State 是 Ratchet 的状态载体；Ratchet 是 State 的演化规则** | Loop Engineering 的 State（Linear / markdown） |
+| **Worktree（工作树）** | 多个并行 loop 不冲突文件。A 类目标下不实例化 | Loop Engineering 的 Worktrees |
 | **Iteration Boundary**（meta） | meta 跨版本回滚的粒度——一次 commit 是一次 iteration 还是一个 ADR 是一次？v0.2 决定 | — |
 | **Meta Score Validity**（meta） | meta Score 不能仅靠 meta 自身产出验证——必须由第一层独立验证（否则 circular） | — |
 
@@ -52,8 +56,8 @@
 | 源头 | 权重 | 借什么 |
 |---|---|---|
 | **AutoResearch** (Karpathy, 2026-03) | 30% | Ratchet / 单文件可改 / 固定预算 / 无人值守哲学 |
-| **Loop Engineering** (Addy Osmani, 2026-06) | 30% | 核心 4 件 + 扩展 3 件（详见 ADR-001） |
-| **darwin-skill** (alchaincyf, 2026-06) | 40% | 物理隔离 writer/judge / 人在回路 checkpoint / 9 维加权评分 / 阶段暂停 |
+| **Loop Engineering** (Addy Osmani, 2026-06) | 30% | 核心 4 件 + 扩展 3 件（详见 ADR-001）。**注**：Loop Engineering 原版 6 件是平铺并列、不分核心/扩展；4+3 是 recursive-tune 在其基础上的归位与子集划分。详见 ADR-001「核心 4 件的层次定义」段。 |
+| **darwin-skill** (alchaincyf, 2026-06) | 40% | 隔离约定 writer/judge / 人在回路 checkpoint / 9 维加权评分 / 阶段暂停 |
 
 darwin-skill 权重最大，因为它的目标域（Skill / prompt / config）最贴近 recursive-tune 实际 use case（A 类目标域）。
 
