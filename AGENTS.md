@@ -12,7 +12,7 @@
 | 骨架 = 核心 4 件 + 扩展 3 件（A 类不实例化扩展） | `docs/adr/ADR-001-loop-engineering-as-skeleton.md` |
 | Ratchet 替代覆盖式写入 | `docs/adr/ADR-002-ratchet-over-mutation.md` |
 | deep-research 首目标推迟到 v0.2 | `docs/adr/ADR-003-first-target-deep-research.md` |
-| v0.1 锚定 A 类目标域 | `docs/adr/ADR-003-first-target-deep-research.md` 末尾 ADR-003.5 |
+| v0.1 锚定 A 类目标域 | `docs/adr/ADR-003.5-A-class-target-domain.md`（独立文件） |
 | Meta 层契约 v0.1 文档级 / v0.2 可执行 | `docs/adr/ADR-004-meta-layer-target.md` |
 | v0.1 spec / 评分维度 / hard rules | `docs/specs/v0.1-skeleton-spec.md` |
 

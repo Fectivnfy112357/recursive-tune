@@ -75,32 +75,10 @@ deep-research 历史文件清单已迁移至 `docs/use-cases/deep-research.md`�
 
 ---
 
-# ADR-003.5 · A 类作为 v0.1 唯一目标域（追加于 2026-08-11）
+# ADR-003.5 · A 类作为 v0.1 唯一目标域
 
-**状态**：确认
-**关联**：ADR-001（核心集合 4 件 + 扩展集合 3 件）
+**状态**：已迁至独立文件 `docs/adr/ADR-003.5-A-class-target-domain.md`
+**迁移时间**：2026-08-11
+**决策内容不变**——v0.1 锚点 = A 类目标域，唯一目标域。
 
----
-
-## 决策
-
-**v0.1 的"目标产物"严格圈定为 A 类目标域——单文件 / 硬指标主导 / 无需多 agent 协作。**
-
-定义见 ADR-001「A 类目标域（一句话定义）」：
-> **A 类目标域**指：单文件 / 硬指标主导 / 无需多 agent 协作的目标产物。典型场景：配置调优、prompt 模板迭代、SKILL.md 改写。
-
-按 ADR-001 的实例化机制，**A 类下骨架只实例化核心 4 件**：
-- Target
-- 隔离约定（profile 级，writer / judge 两个独立 Hermes profile）
-- Ratchet + State
-- Program 模板
-
-**A 类下不实例化扩展 3 件**（Worktrees / Plugins / Sub-agents 派发）。
-
----
-
-## 后果
-
-- v0.1 spec 的 D4 文件树只列核心 4 件对应的 artifacts；Worktrees / Plugins / Sub-agents 三件标"A 类：不启用"
-- v0.1 验证用假 Target demo（一个能跑通 happy path / ratchet / commit-revert 流程的最小 Python repo），不指向 deep-research
-- deep-research 真上车是 v0.2 范围——届时启用扩展 3 件、改 C 类下骨架
+完整内容见 ADR-003.5 独立文件；本处占位仅保留一行摘要供向后兼容查找。

@@ -52,4 +52,4 @@ When implementing tickets in v0.1, **do not assume C-class skeleton components a
 
 If your output contradicts an existing ADR, surface it explicitly rather than silently overriding:
 
-> _Contradicts ADR-0007 (event-sourced orders) — but worth reopening because…_
+> _Contradicts ADR-XXXX (placeholder — replace with real ADR number when used; example only)_
