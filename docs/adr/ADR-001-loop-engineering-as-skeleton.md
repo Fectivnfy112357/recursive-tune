@@ -22,16 +22,26 @@ recursive-tune 要融合三个方法论（AutoResearch、Loop Engineering、darw
 
 ## 决策
 
-**采用 Loop Engineering 的 6 件套作为骨架集合**，但分两个**子集合**：
+**采用 Loop Engineering 的 6 件元素作为骨架全集**，并按下文核心 / 扩展子集实例化。**注：4+3 是 recursive-tune 在 Loop Engineering 6 件基础上的归位与子集划分，不是 Loop Engineering 原版分类**——读者去对照原版时不必找"核心 / 扩展"措辞。
+
+### 核心 4 件的层次定义
+
+| 层次 | 内容 |
+|---|---|
+| **接口**（v0.x 不变） | 4 件的语义：Target = "被改造对象 + git 仓库"；隔离 = "writer / judge 互不可见"；Ratchet + State = "只升不降 + 结果 / best score / eval 集"；Program 模板 = "agent 任务指令模板" |
+| **实现** | v0.1 的具体实例化产物——见 `specs/v0.1-skeleton-spec.md` D4 |
+| **扩展** | D4 文件树之外、v0.2+ 才实例化的实例化产物 |
+
+v0.1 / v0.2 / v0.3 可以替换**实现**（具体文件 / 配置形态），但**接口**不变——这是本框架作为"通用框架"的关键防线。
 
 ### 核心集合（4 件，必装）
 
-任何版本、任何目标域都必须实例化的 4 件：
+任何版本、任何目标域都必须实例化的 4 件接口：
 
-1. **Target**——被优化的对象
-2. **物理隔离**（writer / judge 互不可见）
-3. **Ratchet + State**——ratchet 是"只升不降"的版本控制机制；State 是 ratchet 演化的辅助（results.tsv / best score 指针 / eval 集）
-4. **Program 模板**——agent 的任务指令模板（基于 autoresearch 的 `program.md` 思路）
+1. **Target**——被优化的对象（接口）；v0.1 实现见 spec D4
+2. **隔离约定（profile 级）**——writer / judge 互不可见（接口）；v0.1 实例化为两个独立 Hermes profile
+3. **Ratchet + State**——Ratchet 是只升不降机制的接口；State 是 Ratchet 的状态载体（results.tsv / best score 指针 / eval 集）（**注：**两件互不"辅助"——"State 是 ratchet 演化的辅助"这种措辞会让两者循环依赖。改成"Ratchet 是 State 的演化规则、State 是 Ratchet 的状态载体"）
+4. **Program 模板**——agent 任务指令模板（接口）；v0.1 实例化为 A 类目标无感知占位版（详见 spec D2 + glossary Program 条目）
 
 ### 扩展集合（3 件，按目标域类别启用）
 
@@ -42,6 +52,8 @@ recursive-tune 要融合三个方法论（AutoResearch、Loop Engineering、darw
 | Worktrees | 不实例化（git ratchet 隐式承担） | 实例化 |
 | Plugins | 不实例化 | 实例化（hook / adapter） |
 | Sub-agents 派发 | 不实例化（仅 writer / judge 两个 profile） | 实例化（coordinator 派生子 agent） |
+
+> **关于「隔离约定」vs「Sub-agents 派发」的边界**：核心 4 件第 2 件「隔离约定（profile 级）」的实现形态是"派生两个独立 Hermes profile"——本身就是 sub-agent 实例化，但不是"派发"。扩展 3 件的「Sub-agents 派发」特指 coordinator 派生（一个 agent 派生出多个子 agent 协同工作）的形态，是 C 类下才需要的扩展维度。A 类只有 profile 级隔离，没 coordinator 派生。
 
 理由：
 1. **覆盖度最广**——AutoResearch 的单文件、darwin-skill 的 writer/judge 都能落到"Sub-agents"组件里，但 Sub-agents 在 A 类是"profile 级隔离"、在 C 类才是"派发"
@@ -59,6 +71,8 @@ recursive-tune 要融合三个方法论（AutoResearch、Loop Engineering、darw
 | AutoResearch 元素 | 在 Loop Engineering 骨架里落到哪 |
 |---|---|
 | `prepare.py`（read-only 基础） | 不在 6 件里。**作为 Target 的"环境基线"概念单独存在**——任何 Target 都依赖一个不可变环境 |
+
+注：上述 `prepare.py`（环境基线）是 AutoResearch 的概念在 recursive-tune 里的兜底——环境基线不进入递归对象（Loop 与 Ratchet 不作用于环境基线），只作为不可变前置。Agent 修改 Target 时，环境基线已是只读。这一兜底独立于核心 4 件接口，亦不与 Target 混淆。
 | `train.py`（agent 改的文件） | **Target 本身**——是 Sub-agent（writer）的操作对象 |
 | `program.md`（人写 skill） | **Program 模板（核心）**——recursive-tune 必须自带一份 `program.md` 模板 |
 | git ratchet（只升不降） | **核心（Ratchet + State 组件的一部分）**——ratchet 是 State 文件的演化规则 |
@@ -71,9 +85,9 @@ recursive-tune 要融合三个方法论（AutoResearch、Loop Engineering、darw
 
 | darwin-skill 元素 | 在 Loop Engineering 骨架里落到哪 |
 |---|---|
-| Writer agent（物理隔离） | **核心（物理隔离组件）**；A 类下用独立 Hermes profile 实现 |
-| Judge agent（独立打分） | **核心（物理隔离组件）**；A 类下用独立 Hermes profile 实现 |
-| Checkpoint（阶段暂停） | **不进核心**，是物理隔离组件在 A 类下的运行时约定 |
+| Writer agent（隔离约定） | **核心（隔离约定 / profile 级）**；A 类下用独立 Hermes profile 实现 |
+| Judge agent（独立打分） | **核心（隔离约定 / profile 级）**；A 类下用独立 Hermes profile 实现 |
+| Checkpoint（阶段暂停） | **不进核心**，是隔离约定组件在 A 类下的运行时约定 |
 | 9 维加权评分 | **Score 的具体设计模式**——v1 沿用 darwin-skill 的 9 维结构，但允许 target-specific 自定义（详见 `specs/v0.1-skeleton-spec.md` D3） |
 | 实测数据集 | **核心（Ratchet + State 组件的一部分）**——`tests.json` 或 `eval-prompts.json` 是 State 的内容 |
 
