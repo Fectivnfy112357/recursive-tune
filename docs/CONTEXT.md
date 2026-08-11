@@ -68,7 +68,7 @@ darwin-skill 权重最大，因为它的目标域（Skill / prompt / config）�
 ### v0.1（A 类锚点）
 - **A 类目标域**（单文件 config / SKILL.md / prompt，硬指标主导）
 - 验证用假 Target demo，不指向 deep-research
-- skeleton = 核心 4 件（Target / 物理隔离 / Ratchet-State / Program 模板）
+- skeleton = 核心 4 件（Target / 隔离约定（profile 级）/ Ratchet + State / Program 模板）
 - meta 层 v0.1 文档级承诺（ADR-004），可执行骨架不在 v0.1 范围
 
 ### v0.2（A + C 探索 + meta 落地）

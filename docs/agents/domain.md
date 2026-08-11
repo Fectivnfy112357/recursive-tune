@@ -25,7 +25,7 @@ Single-context repo (this repo) — current state after 2026-08-11 arch-pivot:
 │   │   ├── issue-tracker.md      (where issues live)
 │   │   ├── domain.md             (this file)
 │   │   └── triage-labels.md      (only if external issues flow)
-│   ├── adr/                      (5 ADRs after arch-pivot: ADR-001..003 + 003.5 + 004)
+│   ├── adr/                      (5 ADR files: ADR-001, 002, 003, 003.5 独立, 004)
 │   ├── specs/                    (version-specific spec docs)
 │   │   └── v0.1-skeleton-spec.md
 │   └── use-cases/                (v0.2+ exploration scope, e.g. deep-research.md)
