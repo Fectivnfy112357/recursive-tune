@@ -8,7 +8,7 @@ How the engineering skills should consume this repo's domain documentation when 
 
 - **`docs/CONTEXT.md`** —项目语境、glossary、版本定位（v0.1 / v0.2 / v0.3）、TODO 列表
 - **`docs/adr/`** — ADRs touching the area you're about to work in
-- **`docs/use-cases/`** — only when the work is tied to a specific v0.2+ use case (e.g. `deep-research.md`)
+- **`docs/use-cases/`** — only when the work is tied to a specific v0.2+ use case (e.g. `text-target-hard-signal.md`)
 
 If `CONTEXT.md` doesn't exist, **proceed silently**. The `/domain-modeling` skill creates it lazily when terms or decisions actually get resolved.
 
@@ -25,10 +25,10 @@ Single-context repo (this repo) — current state after 2026-08-11 arch-pivot:
 │   │   ├── issue-tracker.md      (where issues live)
 │   │   ├── domain.md             (this file)
 │   │   └── triage-labels.md      (only if external issues flow)
-│   ├── adr/                      (5 ADR files: ADR-001, 002, 003, 003.5 独立, 004)
+│   ├── adr/                      (5 ADR files: ADR-001, 002, 003.5, 004, 005)
 │   ├── specs/                    (version-specific spec docs)
 │   │   └── v0.1-skeleton-spec.md
-│   └── use-cases/                (v0.2+ exploration scope, e.g. deep-research.md)
+│   └── use-cases/                (v0.2+ exploration scope, e.g. text-target-hard-signal.md)
 └── src/                          (empty for v0.1; v0.2+ scripts land here)
 ```
 

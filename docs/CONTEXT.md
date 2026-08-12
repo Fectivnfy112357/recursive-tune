@@ -32,7 +32,7 @@
 |---|---|---|
 | **Target（目标产物）** | 被优化的对象。一个文件、或一组协同的文件/流水线 | autoresearch 的 `train.py`、darwin-skill 的某个 SKILL.md |
 | **A 类目标域** | 单文件 / 硬指标主导 / 无需多 agent 协作的目标产物 | 配置调优、prompt 模板迭代、SKILL.md 改写 |
-| **C 类目标域** | multi-file / multi-agent 流水线（如 deep-research kanban） | v0.2 才上车 |
+| **C 类目标域** | multi-file / multi-agent 流水线（如多 agent 协作的调研/生成流水线） | v0.2 才上车 |
 | **Loop（循环）** | 一轮「改 → 跑 → 评分 → 决定保留/回滚」 | autoresearch 的实验循环 |
 | **Iteration（一轮迭代）** | 一次完整的 Loop 走完 | autoresearch 的一次 commit |
 | **Ratchet（棘轮）** | 只升不降的版本控制机制——分数只能上不能下，下来就回滚。**v0.1 实现 = git ratchet**（见 ADR-002） | autoresearch 的 git revert 机制 |
@@ -67,13 +67,13 @@ darwin-skill 权重最大，因为它的目标域（Skill / prompt / config）�
 
 ### v0.1（A 类锚点）
 - **A 类目标域**（单文件 config / SKILL.md / prompt，硬指标主导）
-- 验证用假 Target demo，不指向 deep-research
+- 验证用假 Target demo，不指向外部真实 Target
 - skeleton = 核心 4 件（Target / 隔离约定（profile 级）/ Ratchet + State / Program 模板）
 - meta 层 v0.1 文档级承诺（ADR-004），可执行骨架不在 v0.1 范围
 
 ### v0.2（A + C 探索 + meta 落地）
 - 启用扩展 3 件（Worktrees / Plugins / Sub-agents 派发）
-- 上车 deep-research（评估后决定）
+- 上车 C 类真实 Target（评估后决定）
 - meta 层落地可执行骨架
 
 ### v0.3（C 类深耕）
@@ -89,9 +89,7 @@ darwin-skill 权重最大，因为它的目标域（Skill / prompt / config）�
 
 ## 第一个真实目标
 
-参见 `docs/use-cases/deep-research.md`。
-
-原"v0.1 第一阶段只诊断 deep-research"决策已推迟到 v0.2 重新评估（ADR-003）。
+v0.1 不绑真实 first target（用假 Target demo 验证骨架，见 ADR-003.5）；第一个真实目标的上车与否、选谁，由 v0.2 评估后决定（见 `docs/specs/v0.2-skeleton-spec.md` 落点 6）。
 
 ---
 
@@ -99,8 +97,7 @@ darwin-skill 权重最大，因为它的目标域（Skill / prompt / config）�
 
 1. ADR-001：Loop Engineering 核心 4 件 + 扩展 3 件 ✅（commit 1）
 2. ADR-002：Ratchet 替代覆盖式写入 ✅
-3. ADR-003：deep-research 首目标 — 状态推迟 ✅（commit 2）
-4. ADR-003.5：A 类作为 v0.1 唯一目标域 ✅（commit 2 末尾追加）
-5. ADR-004：meta 层契约（v0.1 承诺，v0.2 执行）✅（commit 3）
-6. ADR-005：v0.2 范围锚定 + 扩展 3 件启用条件 ✅（2026-08-12 落 `docs/adr/ADR-005-v0.2-scope.md`）
-7. meta Score Glossary 静态化方案（v0.2 决策，详见 ADR-004 Open Issue）
+3. ADR-003.5：A 类作为 v0.1 唯一目标域 ✅（commit 2 末尾追加）
+4. ADR-004：meta 层契约（v0.1 承诺，v0.2 执行）✅（commit 3）
+5. ADR-005：v0.2 范围锚定 + 扩展 3 件启用条件 ✅（2026-08-12 落 `docs/adr/ADR-005-v0.2-scope.md`）
+6. meta Score Glossary 静态化方案（v0.2 决策，详见 ADR-004 Open Issue）

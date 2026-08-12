@@ -148,7 +148,7 @@ D9 的完整设计依据在本文档 Q5。
 - v0.1 spec D3 / D8:`docs/specs/v0.1-skeleton-spec.md` line 99-122 / line 180-193
 - 隔离约定(D1 profile 级):本协议不涉及隔离;Q5 fixture-set 验证在 writer 之前跑,**不引入新 profile**
 - meta 层(ADR-004):本协议是**第一层**的 hard signal 准入;meta 层 Glossary 维度是另一回事,见 `docs/adr/ADR-004-meta-layer-target.md` Open Issue
-- deep-research 上车:`docs/use-cases/deep-research.md` 的 C 类 hard signal 也走 Q5——v0.2 第一次实跑 deep-research 时,deep-research 自身的 hard signal 命令必须先过 fixture-set
+- C 类 Target 上车：C 类 hard signal 也走 Q5——v0.2 第一次实跑 C 类真实 Target 时,Target 自身的 hard signal 命令必须先过 fixture-set
 
 ---
 
