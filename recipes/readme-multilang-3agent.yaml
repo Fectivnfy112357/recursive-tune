@@ -1,0 +1,39 @@
+# v0.3 T2a · 示例 recipe: README 多语种化 3-agent 流水线（spec D2 first cut）
+#
+# D2 锁定：3 agent = translator / consistency / pr_drafter
+# D1 锁定：各 agent state_rw[0] 不互冲（不同 section → 不同 state_rw）
+# D1 50% 判据来源：cacheable=true，二次执行命中产物即 status=cached（T2a 只
+#   验命中跳过 spawn，不验 50% 阈值；阈值断言留给 T2b 真实 e2e）
+# 复用 v0.2 已落件：
+#   - writer / judge profile（scripts/setup_profiles.sh 已落）
+#   - ratchet = git commit（v0.2 iter.sh:241-242 模式，由 run_recipe.py 调起）
+#
+# prompt_path 用 $SUBAGENTS_REPO_ROOT 环境变量引用 fake_hermes.py 绝对路径
+# （spawn_agent cwd=state_dir，相对路径不可移植）。env 注入由 run_recipe.py
+# 在调 subagents.coordinate 之前完成。
+#
+# Windows 注意：REPO_ROOT 含空格（".../my project/recursive-tune"），
+# prompt_path 必须用双引号包 "$SUBAGENTS_REPO_ROOT/scripts/fake_hermes.py"
+# 让 bash 把它当单 token（不然空格拆词 → python 收到截断路径 → rc=2）。
+
+agents:
+  - name: translator
+    profile: writer
+    prompt_path: "python \"$SUBAGENTS_REPO_ROOT/scripts/fake_hermes.py\" --profile translator --section-id intro"
+    state_rw:
+      - state/sections/intro_translated.md
+    cacheable: true
+
+  - name: consistency
+    profile: judge
+    prompt_path: "python \"$SUBAGENTS_REPO_ROOT/scripts/fake_hermes.py\" --profile consistency --section-id intro --depends state/sections/intro_translated.md"
+    state_rw:
+      - state/sections/intro_consistency.md
+    cacheable: true
+
+  - name: pr_drafter
+    profile: writer
+    prompt_path: "python \"$SUBAGENTS_REPO_ROOT/scripts/fake_hermes.py\" --profile pr_drafter --section-id intro --depends state/sections/intro_translated.md --depends state/sections/intro_consistency.md"
+    state_rw:
+      - state/final_pr.md
+    cacheable: true
