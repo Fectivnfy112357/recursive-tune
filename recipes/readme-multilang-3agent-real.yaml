@@ -1,0 +1,29 @@
+# v0.3 T2b · README 多语种化 recipe（真 hermes 版）
+#
+# 与 readme-multilang-3agent.yaml（T2a fake 版）的唯一区别：prompt_path
+# 调 scripts/real_hermes_runner.py 替代 fake_hermes.py — 走真 LLM。
+#
+# D2 / D1 / D4 锁定同 fake 版；本 recipe 仅用于 T2b 手跑 1 次真实 e2e
+# evidence（不入 CI 守门，CI 守门由 T2a fake_hermes e2e 担当）。
+
+agents:
+  - name: translator
+    profile: writer
+    prompt_path: "python \"$SUBAGENTS_REPO_ROOT/scripts/real_hermes_runner.py\" --profile translator --section-id intro"
+    state_rw:
+      - state/sections/intro_translated.md
+    cacheable: true
+
+  - name: consistency
+    profile: judge
+    prompt_path: "python \"$SUBAGENTS_REPO_ROOT/scripts/real_hermes_runner.py\" --profile consistency --section-id intro --depends state/sections/intro_translated.md"
+    state_rw:
+      - state/sections/intro_consistency.md
+    cacheable: true
+
+  - name: pr_drafter
+    profile: writer
+    prompt_path: "python \"$SUBAGENTS_REPO_ROOT/scripts/real_hermes_runner.py\" --profile pr_drafter --section-id intro --depends state/sections/intro_translated.md --depends state/sections/intro_consistency.md"
+    state_rw:
+      - state/final_pr.md
+    cacheable: true
