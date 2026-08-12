@@ -167,8 +167,10 @@ def run_signal_for_d9(signal, fixture_path, cwd):
     env = dict(os.environ)
     env[D9_FIXTURE_ENV] = str(fixture_path)
     try:
+        # 显式 bash -c 执行 signal（跨平台一致）：Windows 上 shell=True 走 cmd.exe，
+        # 无法执行 .sh 脚本（v0.2.1 修——D9 门真实命中 fixture 后暴露）；Linux 行为不变。
         proc = subprocess.run(
-            signal, shell=True, cwd=str(cwd), env=env,
+            ["bash", "-c", signal], cwd=str(cwd), env=env,
             capture_output=True, text=True, timeout=30,
         )
     except (subprocess.TimeoutExpired, OSError):
@@ -187,8 +189,12 @@ def run_signal_for_d9(signal, fixture_path, cwd):
     return data
 
 
-def validate_d9(scoring, base_dir):
+def validate_d9(scoring, target_path):
     """D9 门禁（v0.2 spec D1 + T1/T2）。
+
+    target_path = config.yaml.target_path（v0.2.1 commit 锁）：
+    fixture 路径统一为 `<target_path>/fixtures/<dimension-name>.yaml`，
+    cwd 行为与 iter.sh:94 cd TARGET_PATH 对齐（config-time 与 runtime 一致）。
 
     返回 (errors, warnings)：errors = 结构错误（fixture 配错，阻断）；
     warnings = 降级提示（缺 fixture / 样本不足 / 命中不足 / 命令未实现 D9 模式，
@@ -199,7 +205,8 @@ def validate_d9(scoring, base_dir):
     dims = scoring.get("dimensions") if isinstance(scoring, dict) else None
     if not isinstance(dims, list):
         return errors, warnings
-    fixtures_dir = Path(base_dir) / "fixtures"
+    target = Path(target_path)
+    fixtures_dir = target / "fixtures"
     for d in dims:
         if not isinstance(d, dict) or d.get("type") != "hard":
             continue
@@ -212,7 +219,7 @@ def validate_d9(scoring, base_dir):
         fixture_path = fixtures_dir / f"{name}.yaml"
         if not fixture_path.exists():
             warnings.append(
-                f"dimension[{name}] 缺 fixture-set（fixtures/{name}.yaml），"
+                f"dimension[{name}] 缺 fixture-set（{fixture_path}），"
                 f"D9 不通过 → 建议降级 soft（spec D1）"
             )
             continue
@@ -227,7 +234,7 @@ def validate_d9(scoring, base_dir):
                 f"D9 不通过 → 建议降级 soft"
             )
             continue
-        result = run_signal_for_d9(signal, fixture_path, Path(base_dir))
+        result = run_signal_for_d9(signal, fixture_path, target)
         if result is None:
             warnings.append(
                 f"dimension[{name}] signal 命令未实现 D9 模式或执行失败"
@@ -358,16 +365,17 @@ def main(argv=None):
     config_path = argv[1] if len(argv) > 1 else DEFAULT_CONFIG
     errors = load_and_validate(scoring_path, config_path)
     d9_warnings = []
-    # D9 门禁（v0.2 spec D1）：load_and_validate 保持纯校验签名，
-    # 这里单独读 scoring 跑 validate_d9（结构错误已由 load_and_validate 报告）。
+    # D9 门禁（v0.2 spec D1 + v0.2.1 commit 锁）：target_path 从 config.yaml 读，
+    # 与 iter.sh:94 cd TARGET_PATH 对齐——fixture 路径 = target_path/fixtures/<name>.yaml。
+    # config 结构错误已在 load_and_validate 拦截（target_path 是必填 key），此处不再 fallback。
     try:
         scoring = yaml.safe_load(Path(scoring_path).read_text(encoding="utf-8"))
         if isinstance(scoring, dict):
-            d9_errors, d9_warnings = validate_d9(
-                scoring, Path(scoring_path).resolve().parent
-            )
+            cfg = yaml.safe_load(Path(config_path).read_text(encoding="utf-8"))
+            target_path = cfg["target_path"] if isinstance(cfg, dict) else Path(scoring_path).resolve().parent
+            d9_errors, d9_warnings = validate_d9(scoring, target_path)
             errors.extend(d9_errors)
-    except (yaml.YAMLError, OSError):
+    except (yaml.YAMLError, OSError, KeyError, TypeError):
         pass  # 已在 load_and_validate 中报告
     if errors:
         for err in errors:

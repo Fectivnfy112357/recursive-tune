@@ -7,6 +7,8 @@ validate_d9 的职责边界：结构错误（fixture 非法 YAML / 缺字段）�
 from pathlib import Path
 import sys
 
+import yaml
+
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
 import validate_config as vc
 
@@ -176,3 +178,62 @@ def test_unparsable_command_output_warns_downgrade(tmp_path):
     errs, warns = vc.validate_d9(_scoring(signal="echo not-json"), tmp_path)
     assert errs == []
     assert any("D9" in w or "解析" in w for w in warns)
+
+
+def test_main_reads_target_path_from_config(tmp_path):
+    """v0.2.1 commit 锁：main() 从 config.yaml.target_path 读 fixture 目录，
+    不再 fallback 到 scoring.yaml 所在目录（spec D2/D9 + iter.sh:82 单路径对齐）。
+
+    验证策略：把 scoring.yaml 与 target_path 隔离到 tmp_path 不同子目录，
+    fixture 只放在 target_path/fixtures/ 下；若 main() 正确读 config.yaml → 无
+    "缺 fixture-set" warning；若错读 scoring.yaml 所在目录 → 必报 warning。
+    """
+    import contextlib
+    import io
+
+    scoring_dir = tmp_path / "scoring_dir"
+    target_dir = tmp_path / "target_dir"
+    scoring_dir.mkdir()
+    target_dir.mkdir()
+
+    scoring = {
+        "dimensions": [
+            {
+                "name": "test_pass_rate",
+                "type": "hard",
+                "weight": 1.0,
+                "signal": 'python -c "import json; print(json.dumps({\'total\': 30, \'positive_hit\': 15, \'negative_reject\': 15}))"',
+            }
+        ],
+        "aggregate": {
+            "hard": "arithmetic_mean",
+            "soft": "weighted_mean",
+            "final": {"formula": "0.6*hard + 0.4*soft"},
+        },
+    }
+    scoring_path = scoring_dir / "scoring.yaml"
+    scoring_path.write_text(yaml.safe_dump(scoring, allow_unicode=True), encoding="utf-8")
+
+    config = {
+        "target_path": str(target_dir),
+        "writer": "writer",
+        "judge": "judge",
+        "program": {"objective": "test", "constraints": ["c1"]},
+        "automations": {"iter_timeout_minutes": 5},
+    }
+    config_path = scoring_dir / "config.yaml"
+    config_path.write_text(yaml.safe_dump(config, allow_unicode=True), encoding="utf-8")
+
+    # fixture 仅放 target_dir/fixtures/（不在 scoring_dir 下）
+    _write_fixture(target_dir, "test_pass_rate", _samples())
+
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf), contextlib.redirect_stderr(buf):
+        rc = vc.main([str(scoring_path), str(config_path)])
+    output = buf.getvalue()
+
+    assert rc == 0
+    assert "缺 fixture-set" not in output, (
+        f"main() 应从 config.yaml.target_path 读 fixture 目录，但报缺 fixture:\n{output}"
+    )
+
