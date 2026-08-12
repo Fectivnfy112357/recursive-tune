@@ -164,23 +164,38 @@ sys.stdout.reconfigure(newline='\n')
 scoring = yaml.safe_load(open(sys.argv[1], encoding='utf-8'))
 judge_text = open(sys.argv[2], encoding='utf-8').read()
 dims = [x for x in scoring.get('dimensions', []) if x.get('type') == 'soft']
-judge_scores = {}
-m = re.search(r'```(?:yaml)?\s*(scores:.*?)```', judge_text, re.S)
-if not m:
-    m = re.search(r'(scores:.*)', judge_text, re.S)
-if m:
-    try:
-        parsed = yaml.safe_load(m.group(1))
-        for s in parsed.get('scores', []):
-            judge_scores[s.get('name')] = s.get('score', 0.0)
-    except Exception:
-        judge_scores = {}
+
+def parse_judge_scores(text):
+    """宽容解析 judge 输出：逐行提取 name/score。
+
+    rationale 是自由文本（可能含 'key: value' 样式），整体 yaml.safe_load
+    会 ScannerError——这里只认行首 '- name:' / 'score:' 结构，rationale 不影响。
+    """
+    scores = {}
+    m = re.search(r'```(?:yaml)?\s*(scores:.*?)```', text, re.S)
+    if not m:
+        m = re.search(r'(scores:.*)', text, re.S)
+    if not m:
+        return scores
+    cur = None
+    for line in m.group(1).splitlines():
+        s = line.strip()
+        nm = re.match(r'^-?\s*name:\s*(.+)$', s)
+        sc = re.match(r'^score:\s*([0-9]+(?:\.[0-9]+)?)$', s)
+        if nm:
+            cur = nm.group(1).strip().strip('"\'')
+        elif sc and cur:
+            scores[cur] = float(sc.group(1))
+    return scores
+
+judge_scores = parse_judge_scores(judge_text)
 if not dims:
     print("0.0")
 else:
     total_w = sum(float(x.get('weight', 1.0)) for x in dims) or 1.0
     val = sum(float(judge_scores.get(x.get('name'), 0.0)) * float(x.get('weight', 1.0)) for x in dims)
-    print(f"{val / total_w:.4f}")
+    # soft 归一化到 0-1：judge 打分 0-10（judge-prompt 模板），formula 按 0-1 语义
+    print(f"{val / total_w / 10:.4f}")
 PYEOF
 )"
 

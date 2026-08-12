@@ -11,6 +11,10 @@ dimensions:
     type: soft
     weight: 1.0
     signal: judge_prompt
+  - name: consistency              # 例：一致性（soft，judge 打分）
+    type: soft
+    weight: 1.0
+    signal: judge_prompt
 
 aggregate:
   hard: arithmetic_mean            # hard 维度内归约（v0.1 只用均值）
