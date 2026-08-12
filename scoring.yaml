@@ -1,0 +1,20 @@
+# v0.1 示例评分维度（recursive-tune）
+# 复制此文件并按你的 Target 修改；schema 见 docs/specs/v0.1-skeleton-spec.md D3。
+# 硬约束：必须含至少 1 个 type: hard 维度（D8 rule 2）。
+
+dimensions:
+  - name: test_pass_rate          # 例：测试通过率（hard，命令量化）
+    type: hard
+    weight: 1.0                    # 0..1；同 type 内归一化
+    signal: "pytest -q"            # hard 维度的 signal 必须是命令
+  - name: clarity                  # 例：可读性（soft，judge 打分）
+    type: soft
+    weight: 1.0
+    signal: judge_prompt
+
+aggregate:
+  hard: arithmetic_mean            # hard 维度内归约（v0.1 只用均值）
+  soft: weighted_mean              # soft 维度内
+  final:
+    formula: "0.6*hard + 0.4*soft" # 可被 config.yaml 的 aggregate 段覆盖
+    default: true
