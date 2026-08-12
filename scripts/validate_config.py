@@ -10,7 +10,10 @@ CLI:  python scripts/validate_config.py [scoring.yaml] [config.yaml]
 from pathlib import Path
 import ast
 import copy
+import json
 import operator
+import os
+import subprocess
 import sys
 
 import yaml
@@ -22,6 +25,16 @@ VALID_TYPES = ("hard", "soft")
 ALLOWED_HARD_AGGREGATE = ("arithmetic_mean",)  # v0.1 只用均值（spec D3）
 ALLOWED_SOFT_AGGREGATE = ("weighted_mean",)
 JUDGE_PROMPT = "judge_prompt"
+
+# D9（v0.2 spec D1）：社区共识 hard signal 首次使用免跑 fixture-set 验证。
+# 豁免识别机制（O5）：first cut 用内建工具名白名单（不动 scoring.yaml schema）。
+# 匹配语义：signal 命令的第一个词（工具名）命中即豁免——"pytest" 覆盖
+# pytest / pytest -q / pytest -q -x 等全部社区共识变体（C-改1）。
+KNOWN_EXEMPT_COMMANDS = ("pytest",)
+D9_MIN_SAMPLES = 20
+D9_MIN_PER_SIDE = 10
+D9_HIT_THRESHOLD = 0.8
+D9_FIXTURE_ENV = "D9_FIXTURE_PATH"
 
 _FORMULA_OPS = {
     ast.Add: operator.add, ast.Sub: operator.sub, ast.Mult: operator.mul,
@@ -111,6 +124,130 @@ def validate_scoring(data):
         elif not _formula_syntax_ok(final.get("formula")):
             errors.append("aggregate.final.formula 不可求值（只允许 hard/soft + 算术运算符）")
     return errors
+
+
+def parse_fixture(path):
+    """解析 fixtures/<dimension-name>.yaml。返回 (positive_total, negative_total, errors)。
+
+    结构错误（非法 YAML / 缺 expect / 非 pass|fail）→ errors（阻断，配置坏了要修）。
+    """
+    errors = []
+    try:
+        raw = yaml.safe_load(Path(path).read_text(encoding="utf-8"))
+    except yaml.YAMLError as exc:
+        return 0, 0, [f"{path.name} 非法 YAML: {exc}"]
+    if not isinstance(raw, list):
+        return 0, 0, [f"{path.name} 必须是 YAML 列表"]
+    pos = neg = 0
+    for i, item in enumerate(raw):
+        if not isinstance(item, dict):
+            errors.append(f"{path.name}[{i}] 必须是映射（input + expect）")
+            continue
+        if "input" not in item:
+            errors.append(f"{path.name}[{i}] 缺 input 字段")
+        expect = item.get("expect")
+        if expect not in ("pass", "fail"):
+            errors.append(f"{path.name}[{i}] expect 必须是 pass|fail")
+            continue
+        if expect == "pass":
+            pos += 1
+        else:
+            neg += 1
+    return pos, neg, errors
+
+
+def run_signal_for_d9(signal, fixture_path, cwd):
+    """执行 signal 命令做 D9 命中验证（A-min 约定）。
+
+    注入 D9_FIXTURE_PATH 环境变量，cwd = fixture 所在目录；
+    返回解析后的 dict；任何失败（非零 / 超时 / 输出不可解析）→ None。
+    """
+    env = dict(os.environ)
+    env[D9_FIXTURE_ENV] = str(fixture_path)
+    try:
+        proc = subprocess.run(
+            signal, shell=True, cwd=str(cwd), env=env,
+            capture_output=True, text=True, timeout=30,
+        )
+    except (subprocess.TimeoutExpired, OSError):
+        return None
+    if proc.returncode != 0:
+        return None
+    try:
+        data = json.loads(proc.stdout.strip())
+    except (json.JSONDecodeError, ValueError):
+        return None
+    if not isinstance(data, dict):
+        return None
+    for key in ("total", "positive_hit", "negative_reject"):
+        if not isinstance(data.get(key), (int, float)):
+            return None
+    return data
+
+
+def validate_d9(scoring, base_dir):
+    """D9 门禁（v0.2 spec D1 + T1/T2）。
+
+    返回 (errors, warnings)：errors = 结构错误（fixture 配错，阻断）；
+    warnings = 降级提示（缺 fixture / 样本不足 / 命中不足 / 命令未实现 D9 模式，
+    不阻断——用户可降级 soft 继续）。
+    """
+    errors = []
+    warnings = []
+    dims = scoring.get("dimensions") if isinstance(scoring, dict) else None
+    if not isinstance(dims, list):
+        return errors, warnings
+    fixtures_dir = Path(base_dir) / "fixtures"
+    for d in dims:
+        if not isinstance(d, dict) or d.get("type") != "hard":
+            continue
+        name = d.get("name")
+        signal = d.get("signal")
+        if not isinstance(name, str) or not isinstance(signal, str):
+            continue
+        if signal.strip().split()[0] in KNOWN_EXEMPT_COMMANDS:
+            continue  # 社区共识工具名豁免（O5 first cut：内建白名单）
+        fixture_path = fixtures_dir / f"{name}.yaml"
+        if not fixture_path.exists():
+            warnings.append(
+                f"dimension[{name}] 缺 fixture-set（fixtures/{name}.yaml），"
+                f"D9 不通过 → 建议降级 soft（spec D1）"
+            )
+            continue
+        pos_total, neg_total, parse_errors = parse_fixture(fixture_path)
+        errors.extend(parse_errors)
+        if parse_errors:
+            continue
+        if pos_total + neg_total < D9_MIN_SAMPLES or pos_total < D9_MIN_PER_SIDE or neg_total < D9_MIN_PER_SIDE:
+            warnings.append(
+                f"dimension[{name}] fixture-set 样本不足 "
+                f"（{pos_total} positive / {neg_total} negative，需 ≥{D9_MIN_SAMPLES} 且单侧 ≥{D9_MIN_PER_SIDE}），"
+                f"D9 不通过 → 建议降级 soft"
+            )
+            continue
+        result = run_signal_for_d9(signal, fixture_path, Path(base_dir))
+        if result is None:
+            warnings.append(
+                f"dimension[{name}] signal 命令未实现 D9 模式或执行失败"
+                f"（无法解析 JSON 输出）→ 建议降级 soft"
+            )
+            continue
+        if result["total"] != pos_total + neg_total:
+            warnings.append(
+                f"dimension[{name}] D9 命令 total={result['total']} "
+                f"与 fixture 样本数 {pos_total + neg_total} 不一致"
+                f"（命令未跑全样本）→ 建议降级 soft"
+            )
+            continue
+        pos_hit_rate = result["positive_hit"] / pos_total
+        neg_reject_rate = result["negative_reject"] / neg_total
+        if pos_hit_rate < D9_HIT_THRESHOLD or neg_reject_rate < D9_HIT_THRESHOLD:
+            warnings.append(
+                f"dimension[{name}] fixture-set 命中不足"
+                f"（positive {pos_hit_rate:.0%} / negative {neg_reject_rate:.0%}，"
+                f"需 ≥{D9_HIT_THRESHOLD:.0%}）→ 建议降级 soft"
+            )
+    return errors, warnings
 
 
 def _formula_syntax_ok(formula):
@@ -218,11 +355,25 @@ def main(argv=None):
     scoring_path = argv[0] if len(argv) > 0 else DEFAULT_SCORING
     config_path = argv[1] if len(argv) > 1 else DEFAULT_CONFIG
     errors = load_and_validate(scoring_path, config_path)
+    d9_warnings = []
+    # D9 门禁（v0.2 spec D1）：load_and_validate 保持纯校验签名，
+    # 这里单独读 scoring 跑 validate_d9（结构错误已由 load_and_validate 报告）。
+    try:
+        scoring = yaml.safe_load(Path(scoring_path).read_text(encoding="utf-8"))
+        if isinstance(scoring, dict):
+            d9_errors, d9_warnings = validate_d9(
+                scoring, Path(scoring_path).resolve().parent
+            )
+            errors.extend(d9_errors)
+    except (yaml.YAMLError, OSError):
+        pass  # 已在 load_and_validate 中报告
     if errors:
         for err in errors:
             print(f"ERROR: {err}", file=sys.stderr)
         print(f"配置校验失败：{len(errors)} 个错误", file=sys.stderr)
         sys.exit(1)
+    for warn in d9_warnings:
+        print(f"WARNING: {warn}")
     print("OK: scoring.yaml + config.yaml 校验通过")
     return 0
 
