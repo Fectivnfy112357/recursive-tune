@@ -30,6 +30,8 @@ JUDGE_PROMPT = "judge_prompt"
 # 豁免识别机制（O5）：first cut 用内建工具名白名单（不动 scoring.yaml schema）。
 # 匹配语义：signal 命令的第一个词（工具名）命中即豁免——"pytest" 覆盖
 # pytest / pytest -q / pytest -q -x 等全部社区共识变体（C-改1）。
+# 维护纪律：扩白名单时必须同步在 tests/test_d9_gate.py 加 test_exempt_xxx_variants
+# 验证新工具名豁免生效（spec D1 O5 锁定段）。
 KNOWN_EXEMPT_COMMANDS = ("pytest",)
 D9_MIN_SAMPLES = 20
 D9_MIN_PER_SIDE = 10

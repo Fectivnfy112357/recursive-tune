@@ -27,7 +27,7 @@ E2E_LOG="$REPO_ROOT/state/e2e.log"
 mkdir -p "$(dirname "$E2E_LOG")"
 echo "=== T4 启动 $(date) ===" >> "$E2E_LOG"
 
-# ---- 一次性准备：profile + target repo + d9 runner staging（短路径，绕开 iter.sh:87 bash -c 拆空格）----
+# ---- 一次性准备：profile + target repo + d9 runner staging（短路径，绕开 iter.sh:94 bash -c 拆空格）----
 # d9_runner.sh 从 demo-skill-src 模板复制（setup_demo_skill.sh 生成 target 前就需要它）
 D9_STAGE="C:/Users/32115/AppData/Local/Temp/d9"
 mkdir -p "$D9_STAGE"
