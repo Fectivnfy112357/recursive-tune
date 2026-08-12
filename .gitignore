@@ -10,4 +10,6 @@ __pycache__/
 # demo-target 是运行时生成的独立 git repo（setup_demo.sh 从 demo-src/ 复制 + git init）；
 # 整个忽略——避免嵌套 .git 触发外层 gitlink（demo 源码模板在 demo-src/，照常 track）
 demo-target/
+demo-skill-target/
 state/
+state/e2e.log

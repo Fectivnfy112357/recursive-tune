@@ -1,0 +1,43 @@
+# 10 positive：含三段式（事实 + 选项 + 决策建议）——期望 runner 判 pass
+- input: "事实：用户已读 3 篇论文。选项：投稿 / 再做一项。决策建议：你更怕拖还是怕被拒？"
+  expect: pass
+- input: "事实：今天温度 35°C。选项：开窗 / 开空调。决策建议：电费敏感还是体感敏感？"
+  expect: pass
+- input: "事实：公司裁员 5%，团队没动。选项：跳 / 留。决策建议：你更怕稳定还是怕错失？"
+  expect: pass
+- input: "事实：房价跌 10%，租约到期。选项：续租 / 换房。决策建议：流动性还是锁定成本？"
+  expect: pass
+- input: "事实：孩子月考 70 分。选项：报班 / 自学。决策建议：分数压力还是兴趣保护？"
+  expect: pass
+- input: "事实：项目延期 2 周。选项：加班赶 / 顺延。决策建议：团队疲劳还是客户失信？"
+  expect: pass
+- input: "事实：身体检查出结节。选项：手术 / 观察。决策建议：风险承受还是长期监测？"
+  expect: pass
+- input: "事实：股市跌 15%。选项：加仓 / 减仓。决策建议：浮亏容忍还是机会成本？"
+  expect: pass
+- input: "事实：offer 涨薪 20%，但要换城市。选项：接 / 拒。决策建议：家庭优先还是职业曲线？"
+  expect: pass
+- input: "事实：用户反馈两极化。选项：跟随多数 / 服务少数。决策建议：广度还是深度？"
+  expect: pass
+
+# 10 negative：缺任一段（3 缺事实 / 3 缺选项 / 4 缺决策建议）——期望 runner 判 fail
+- input: "建议直接做 A 因为 B"
+  expect: fail
+- input: "事情就是这样办"
+  expect: fail
+- input: "先做 X 试试"
+  expect: fail
+- input: "事实：水温 80°C。决定：喝。"
+  expect: fail
+- input: "事实：合同到期。决定：续签。"
+  expect: fail
+- input: "事实：项目超预算。决定：停。"
+  expect: fail
+- input: "选项：买房 / 租房。所以选买房。"
+  expect: fail
+- input: "选项：读研 / 工作。所以直接工作。"
+  expect: fail
+- input: "选项：结婚 / 单身。然后结婚。"
+  expect: fail
+- input: "事实：用户要退款。选项：同意 / 拒绝。所以拒绝。"
+  expect: fail

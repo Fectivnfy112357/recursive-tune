@@ -79,12 +79,22 @@ hermes --no-restore-cwd -p "$WRITER_PROFILE" -z "$(cat "$PROGRAM_FILE")" > "$STA
 HARD_FILE="$STATE_DIR/hard-$ITER_NUM.tsv"
 : > "$HARD_FILE"
 REJECTED=0
+# D9 约定（v0.2 spec D1+D9）：fixture 目录定位——target_path 的同级 fixtures/ 子目录
+# 注入 D9_FIXTURE_PATH 给 runner，让硬信号能跑 fixture-set 命中验证
+FIXTURES_DIR="$TARGET_PATH/../fixtures"
+[ -d "$FIXTURES_DIR" ] || FIXTURES_DIR="$TARGET_PATH/fixtures"
 
 while IFS=$'\t' read -r name signal; do
   [ -n "$name" ] || continue
   LOG="$STATE_DIR/hard-$ITER_NUM-${name}.log"
   set +e
-  (cd "$TARGET_PATH" && timeout "${TIMEOUT_MIN}m" bash -c "$signal" > "$LOG" 2>&1)
+  # D9 约定（v0.2 spec D9）：注入 D9_FIXTURE_PATH 给 runner（v0.1 兼容性保留——无 fixture 时不传）
+  FIXTURE_PATH="$FIXTURES_DIR/${name}.yaml"
+  if [ -f "$FIXTURE_PATH" ]; then
+    (cd "$TARGET_PATH" && timeout "${TIMEOUT_MIN}m" env "D9_FIXTURE_PATH=$FIXTURE_PATH" bash -c "$signal" > "$LOG" 2>&1)
+  else
+    (cd "$TARGET_PATH" && timeout "${TIMEOUT_MIN}m" bash -c "$signal" > "$LOG" 2>&1)
+  fi
   rc=$?
   set -e
   if [ $rc -eq 124 ] || [ $rc -eq 137 ]; then
