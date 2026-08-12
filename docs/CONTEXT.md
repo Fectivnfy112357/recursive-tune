@@ -102,5 +102,5 @@ darwin-skill 权重最大，因为它的目标域（Skill / prompt / config）�
 3. ADR-003：deep-research 首目标 — 状态推迟 ✅（commit 2）
 4. ADR-003.5：A 类作为 v0.1 唯一目标域 ✅（commit 2 末尾追加）
 5. ADR-004：meta 层契约（v0.1 承诺，v0.2 执行）✅（commit 3）
-6. ADR-005：v0.2 扩展 3 件启用条件（待 v0.1 验证后写）
+6. ADR-005：v0.2 范围锚定 + 扩展 3 件启用条件 ✅（2026-08-12 落 `docs/adr/ADR-005-v0.2-scope.md`）
 7. meta Score Glossary 静态化方案（v0.2 决策，详见 ADR-004 Open Issue）
