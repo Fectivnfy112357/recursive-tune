@@ -32,8 +32,55 @@ echo "=== T4 启动 $(date) ===" >> "$E2E_LOG"
 D9_STAGE="C:/Users/32115/AppData/Local/Temp/d9"
 mkdir -p "$D9_STAGE"
 cp "$REPO_ROOT/demo-skill-src/tests/d9_runner.sh" "$D9_STAGE/d9_runner.sh"
+# 先跑 setup（真实 hermes 创建 profile）——fake hermes 只作用于 iter 阶段，不能拦 setup
 bash scripts/setup_profiles.sh >/dev/null
 bash scripts/setup_demo_skill.sh
+
+# fake hermes stub（v0.2.1 commit 锁：消除 LLM judge 非 deterministic 风险，T4 deterministic 测骨架逻辑）
+# writer: 向 Target 的 SKILL.md 追加固定 marker（确定性修改，保证 git diff 非空 → commit 可成功；
+#   no-op 会导致 git commit "nothing to commit" → iter.sh set -e 退出，v0.2.1 实测踩坑）
+# judge: 输出固定 soft score（5.0 / 10 = 0.5）
+cat > "$D9_STAGE/hermes" <<'HERMES_EOF'
+#!/bin/sh
+# fake hermes stub for T4 deterministic test (v0.2.1 commit 锁)
+# 参数形态（iter.sh 调用）：hermes --no-restore-cwd -p <profile> -z <program内容>
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --no-restore-cwd) shift ;;
+    -z) program="$2"; shift 2 ;;
+    -p) profile="$2"; shift 2 ;;
+    *) shift ;;
+  esac
+done
+case "$profile" in
+  writer)
+    # 从 program.md 提取 Target 路径（模板格式：- **Target 路径**：`<abs>`）
+    target_path="$(printf '%s\n' "$program" | sed -n 's/.*Target 路径.*`\([^`]*\)`.*/\1/p' | head -1)"
+    [ -n "$target_path" ] || target_path="demo-skill-target"
+    echo "# T4 fake hermes marker" >> "$target_path/SKILL.md"
+    echo "fake hermes writer: append marker (T4 stub)"
+    exit 0
+    ;;
+  judge)
+    cat <<'EOF'
+scores:
+  - name: clarity
+    type: soft
+    score: 5.0
+    rationale: fake hermes stub (T4 deterministic test)
+EOF
+    exit 0
+    ;;
+  *)
+    exit 0
+    ;;
+esac
+HERMES_EOF
+chmod +x "$D9_STAGE/hermes"
+# PATH 优先 fake hermes（iter.sh 调 hermes 时实际调 fake）
+# 注意：必须是 MSYS 路径格式（cygpath -u）——bash 命令查找按 MSYS 路径解析，
+# Windows 格式项（C:/...）会被跳过导致 fake 不生效（v0.2.1 实测踩坑）
+export PATH="$(cygpath -u "$D9_STAGE"):$PATH"
 
 # ---- 备份/恢复（关键：避免污染根 scoring + 根 state）----
 BACKUP_DIR="$(mktemp -d)"

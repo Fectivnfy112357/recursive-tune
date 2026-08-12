@@ -93,6 +93,8 @@ while IFS=$'\t' read -r name signal; do
   if [ -f "$FIXTURE_PATH" ]; then
     (cd "$TARGET_PATH" && timeout "${TIMEOUT_MIN}m" env "D9_FIXTURE_PATH=$FIXTURE_PATH" bash -c "$signal" > "$LOG" 2>&1)
   else
+    # 骨架层信息提示（v0.2.1 commit 锁）：fixture 缺失不阻断，但 stderr 警告以利 debug
+    echo "  hard[$name]: WARN 缺 fixture-set ($FIXTURE_PATH)，signal 裸跑（缺 D9_FIXTURE_PATH → signal 大概率 exit 1 → rule 7 reject）" >&2
     (cd "$TARGET_PATH" && timeout "${TIMEOUT_MIN}m" bash -c "$signal" > "$LOG" 2>&1)
   fi
   rc=$?
