@@ -6,6 +6,13 @@ target_path: "./demo-target"       # A 类 Target 仓库路径（必须 git init
 writer: writer                     # Writer Hermes profile 名（setup_profiles.sh 创建）
 judge: judge                       # Judge Hermes profile 名
 
+program:                           # 生成 program.md 用的任务指令
+  objective: "让 demo-target 的 pytest 全绿：把 config.py 的 TARGET_VALUE 改为 42"
+  constraints:
+    - "只允许修改 demo-target/config.py"
+    - "禁止修改 test_config.py"
+    - "每次迭代只做一次聚焦改动"
+
 aggregate:                         # 可选：覆盖 scoring.yaml 的 aggregate
   final:
     formula: "1.0*hard + 0.0*soft" # A 类纯硬指标场景：取消 soft 稀释

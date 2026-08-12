@@ -26,6 +26,10 @@ VALID_CONFIG = {
     "target_path": "./demo-target",
     "writer": "writer",
     "judge": "judge",
+    "program": {
+        "objective": "让 demo-target 的 pytest 全绿",
+        "constraints": ["只允许修改 demo-target/config.py", "禁止修改 test_config.py"],
+    },
     "automations": {"iter_timeout_minutes": 5},
 }
 
@@ -153,6 +157,53 @@ def test_config_aggregate_final_must_be_mapping_if_present():
     data = copy.deepcopy(VALID_CONFIG)
     data["aggregate"] = {"final": "0.6*hard"}
     assert any("aggregate.final" in e for e in vc.validate_config(data))
+
+
+def test_config_missing_program_fails():
+    data = copy.deepcopy(VALID_CONFIG)
+    del data["program"]
+    assert any("program" in e for e in vc.validate_config(data))
+
+
+def test_config_program_bad_objective_fails():
+    data = copy.deepcopy(VALID_CONFIG)
+    data["program"]["objective"] = ""
+    assert any("program.objective" in e for e in vc.validate_config(data))
+
+
+def test_config_program_bad_constraints_fails():
+    data = copy.deepcopy(VALID_CONFIG)
+    data["program"]["constraints"] = []
+    assert any("program.constraints" in e for e in vc.validate_config(data))
+
+    data = copy.deepcopy(VALID_CONFIG)
+    data["program"]["constraints"] = ["ok", ""]
+    assert any("program.constraints[1]" in e for e in vc.validate_config(data))
+
+
+# --- eval_formula（安全求值，ast 白名单） ---
+
+def test_eval_formula_basic():
+    assert vc.eval_formula("0.6*hard + 0.4*soft", 1.0, 0.5) == 0.6 * 1.0 + 0.4 * 0.5
+    assert vc.eval_formula("1.0*hard + 0.0*soft", 1.0, 0.0) == 1.0
+    assert vc.eval_formula("hard", 0.8, 0.2) == 0.8
+    assert vc.eval_formula("(hard + soft)/2", 0.6, 0.4) == 0.5
+
+
+def test_eval_formula_rejects_unsafe():
+    # eval 沙箱经典逃逸链（纯属性访问，不需要 builtins）必须被 ast 白名单拒绝
+    with pytest.raises(ValueError):
+        vc.eval_formula("__import__('os').system('echo pwned')", 0.0, 0.0)
+    with pytest.raises(ValueError):
+        vc.eval_formula("hard.__class__.__mro__[1].__subclasses__()", 0.0, 0.0)
+    with pytest.raises((ValueError, ZeroDivisionError)):
+        vc.eval_formula("1/0", 0.0, 0.0)
+
+
+def test_scoring_invalid_formula_fails():
+    data = copy.deepcopy(VALID_SCORING)
+    data["aggregate"]["final"]["formula"] = "__import__('os')"
+    assert any("formula" in e for e in vc.validate_scoring(data))
 
 
 # --- 端到端（文件读入） ---

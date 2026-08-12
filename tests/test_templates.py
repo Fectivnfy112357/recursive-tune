@@ -6,7 +6,7 @@ import re
 TEMPLATES = Path(__file__).resolve().parent.parent / "templates"
 
 PROGRAM_PLACEHOLDERS = {"{{target_path}}", "{{objective}}", "{{constraints}}"}
-JUDGE_PLACEHOLDERS = {"{{target_path}}", "{{dimensions}}"}
+JUDGE_PLACEHOLDERS = {"{{target_path}}", "{{dimensions}}", "{{diff}}"}
 # 具体 Target 类型词：A 类无感知（spec D2）要求模板不点名任何具体目标内容
 CONCRETE_TARGET_WORDS = ("SKILL.md", "config.yaml", "train.py")
 

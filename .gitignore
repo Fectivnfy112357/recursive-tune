@@ -6,3 +6,9 @@ __pycache__/
 .DS_Store
 *.tmp
 .idea
+
+# demo-target 是运行时生成的独立 git repo（setup_demo.sh git init）；只忽略 .git，源码照常 track
+demo-target/.git/
+demo-target/__pycache__/
+demo-target/.pytest_cache/
+state/

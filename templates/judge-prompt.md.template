@@ -7,7 +7,8 @@
 ## 输入
 
 - **Target 路径**：`{{target_path}}`
-- **本次改动**：Target 仓库的 git diff（由运行脚本提供）
+- **本次改动（git diff，由运行脚本注入）**：
+{{diff}}
 - **打分维度**：
 {{dimensions}}
 

@@ -8,18 +8,48 @@ CLI:  python scripts/validate_config.py [scoring.yaml] [config.yaml]
 """
 
 from pathlib import Path
+import ast
 import copy
+import operator
 import sys
 
 import yaml
 
 DEFAULT_SCORING = "scoring.yaml"
 DEFAULT_CONFIG = "config.yaml"
-REQUIRED_CONFIG_KEYS = ("target_path", "writer", "judge", "automations")
+REQUIRED_CONFIG_KEYS = ("target_path", "writer", "judge", "program", "automations")
 VALID_TYPES = ("hard", "soft")
 ALLOWED_HARD_AGGREGATE = ("arithmetic_mean",)  # v0.1 只用均值（spec D3）
 ALLOWED_SOFT_AGGREGATE = ("weighted_mean",)
 JUDGE_PROMPT = "judge_prompt"
+
+_FORMULA_OPS = {
+    ast.Add: operator.add, ast.Sub: operator.sub, ast.Mult: operator.mul,
+    ast.Div: operator.truediv, ast.Pow: operator.pow, ast.Mod: operator.mod,
+    ast.USub: operator.neg, ast.UAdd: operator.pos,
+}
+
+
+def eval_formula(formula, hard, soft):
+    """安全求值 aggregate.final.formula（仅允许 hard/soft 变量 + 算术运算符）。
+
+    不用 eval：__builtins__ 清空仍可经属性访问链逃逸。这里用 ast 白名单，
+    只接受 Constant / Name(hard|soft) / 四则运算 + 幂 + 取模 + 一元正负。
+    """
+    node = ast.parse(formula, mode="eval").body
+
+    def _eval(n):
+        if isinstance(n, ast.Constant) and isinstance(n.value, (int, float)):
+            return n.value
+        if isinstance(n, ast.Name) and n.id in ("hard", "soft"):
+            return hard if n.id == "hard" else soft
+        if isinstance(n, ast.BinOp) and type(n.op) in _FORMULA_OPS:
+            return _FORMULA_OPS[type(n.op)](_eval(n.left), _eval(n.right))
+        if isinstance(n, ast.UnaryOp) and type(n.op) in _FORMULA_OPS:
+            return _FORMULA_OPS[type(n.op)](_eval(n.operand))
+        raise ValueError(f"formula 只允许 hard/soft + 算术运算符: {formula!r}")
+
+    return _eval(node)
 
 
 def validate_scoring(data):
@@ -78,7 +108,17 @@ def validate_scoring(data):
                 errors.append("aggregate.final 必须是映射")
         elif not isinstance(final.get("formula"), str) or not final.get("formula"):
             errors.append("aggregate.final.formula 必须是非空字符串")
+        elif not _formula_syntax_ok(final.get("formula")):
+            errors.append("aggregate.final.formula 不可求值（只允许 hard/soft + 算术运算符）")
     return errors
+
+
+def _formula_syntax_ok(formula):
+    try:
+        eval_formula(formula, 0.0, 0.0)
+        return True
+    except Exception:
+        return False
 
 
 def validate_config(data):
@@ -103,6 +143,21 @@ def validate_config(data):
     elif "automations" in data:
         errors.append("automations 必须是映射")
 
+    program = data.get("program")
+    if not isinstance(program, dict):
+        errors.append("program 必须是映射（objective + constraints）")
+    else:
+        objective = program.get("objective")
+        if not isinstance(objective, str) or not objective:
+            errors.append("program.objective 必须是非空字符串")
+        constraints = program.get("constraints")
+        if not isinstance(constraints, list) or not constraints:
+            errors.append("program.constraints 必须是非空列表")
+        else:
+            for i, c in enumerate(constraints):
+                if not isinstance(c, str) or not c:
+                    errors.append(f"program.constraints[{i}] 必须是非空字符串")
+
     aggregate = data.get("aggregate")
     if aggregate is not None:
         if not isinstance(aggregate, dict):
@@ -115,9 +170,8 @@ def validate_config(data):
 def effective_aggregate(scoring, config):
     """config.yaml 的 aggregate 段覆盖 scoring.yaml 的 aggregate。
 
-    覆盖语义（spec D3「formula 可被 config.yaml 覆盖」）：config 只覆盖它
-    出现的字段（典型：final.formula），未出现的字段（hard / soft 归约）
-    继承 scoring.yaml。
+    覆盖语义（spec D3「formula 可被 config.yaml 覆盖」）：只有 final 段
+    （典型 final.formula）可被覆盖；hard / soft 归约方法继承 scoring.yaml。
     """
     agg = copy.deepcopy(scoring.get("aggregate")) if isinstance(scoring, dict) else None
     override = config.get("aggregate") if isinstance(config, dict) else None
@@ -131,9 +185,6 @@ def effective_aggregate(scoring, config):
         if isinstance(override_final, dict):
             final.update(override_final)
         agg["final"] = final
-        for key, value in override.items():
-            if key != "final":
-                agg[key] = value
     return agg
 
 
