@@ -100,4 +100,4 @@ v0.1 不绑真实 first target（用假 Target demo 验证骨架，见 ADR-003.5
 3. ADR-003.5：A 类作为 v0.1 唯一目标域 ✅（commit 2 末尾追加）
 4. ADR-004：meta 层契约（v0.1 承诺，v0.2 执行）✅（commit 3）
 5. ADR-005：v0.2 范围锚定 + 扩展 3 件启用条件 ✅（2026-08-12 落 `docs/adr/ADR-005-v0.2-scope.md`）
-6. meta Score Glossary 静态化方案（v0.2 决策，详见 ADR-004 Open Issue）
+6. meta Score Glossary 静态化方案（v0.3 spec D3.2 量化触发（n≥10），D3.3 推迟到 v0.4 准备，详见 ADR-004 Open Issue）
