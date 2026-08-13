@@ -44,7 +44,7 @@ ADR-001 的 4+3 归位表（核心 4 件 + 扩展 3 件）定义**接口全集**
 | 4 | **Program 模板** | 核心 4 件 | **in production** | `templates/program.md.template` + `templates/judge-prompt.md.template` + v0.1 起的 A 类 program.md 实战 |
 | 5 | **Worktrees** | 扩展 3 件 | **specd** | ADR-005 决策 1 trigger 矩阵 + v0.2 D5 接口规格；v0.3 spec D1 显式"本轮 recipe 设计使触发未命中"；无 `scripts/` 实现 |
 | 6 | **Plugins** | 扩展 3 件 | **specd** | ADR-005 决策 1 trigger 矩阵 + v0.2 D5 接口规格；无 `scripts/` 实现 |
-| 7 | **Sub-agents 派发** | 扩展 3 件 | **in production** | v0.3 T1 派发骨架件 + D1.5 字段层（PR #12，commit `b1de151`）+ T2a 3-agent stub e2e（PR #13）+ T2b 真 e2e 50% 阈值断言 PASS（PR #14，commit `14eefb2`，2026-08-13 merge） |
+| 7 | **Sub-agents 派发** | 扩展 3 件 | **in production** | v0.3 T1 派发骨架件 + D1.5 字段层（PR #12，commit `b1de151`）+ T2a 3-agent stub e2e（PR #13）+ T2b 真 e2e 50% 阈值断言 PASS（PR #14，2026-08-13 merge commit `60ab6e9`，源分支 commit `14eefb2`） |
 
 > **关于 Sub-agents 派发 in production 的判定**：T1 + T2a 已确立"派发骨架件 + 字段层 + 机械结构 e2e"齐备；T2b 真 e2e 是同一件 in production 的"强化证据"（决策 1 要求的"非 stub"判据），不构成状态跃迁必要条件。T2b merge 后状态不变（in production），但 e2e evidence 升完整。
 
