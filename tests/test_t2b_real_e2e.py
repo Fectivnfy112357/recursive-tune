@@ -4,7 +4,7 @@ CI 守门交给 test_t2a_e2e（fake_hermes stub 路径）。本测试：
 - skipif hermes 二进制不可用（与 v0.2 T4 shell 测试同构——`command -v hermes`
   缺失即 skip）
 - 真实 LLM + 真实 git repo 跑一次，验 spawn 全 ok + 产物落库 + D4 三维 pass
-- 不验 wall clock 中位 ≤50%（那是 t2b_wall_clock.py 一次手跑的 evidence 文档责任，
+- 不验 wall clock 中位 ≤50%（那是 wall clock evidence 文档的责任，
   不入 CI 断言——spec T2b：「PR 可人工 merge」「wall clock ≤50%」两条判据只在
   T2b 下成立，不作为 CI 断言）
 
@@ -105,7 +105,7 @@ def test_real_hermes_translates_one_paragraph(local_demo_clone):
 def test_real_recipe_runs_end_to_end(local_demo_clone):
     """真 hermes recipe 跑通：3 agent 全 ok + state 产物 + D4 pass。
 
-    本测试跳 wall clock 断言（那是 t2b_wall_clock.py 的责任），只验
+    本测试跳 wall clock 断言（那是 wall clock evidence 文档的责任），只验
     骨架件 / spawn / 聚合 / D4 命令跑通。
     """
     result = rr.run_recipe(RECIPE_REAL, local_demo_clone)
