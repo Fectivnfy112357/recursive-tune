@@ -72,9 +72,9 @@ darwin-skill 权重最大，因为它的目标域（Skill / prompt / config）�
 - meta 层 v0.1 文档级承诺（ADR-004），可执行骨架不在 v0.1 范围
 
 ### v0.2（A + C 探索 + meta 落地）
-- 启用扩展 3 件（Worktrees / Plugins / Sub-agents 派发）
-- 上车 C 类真实 Target（评估后决定）
-- meta 层落地可执行骨架
+- 定义扩展 3 件接口（A 类必不装；C 类按 ADR-005 决策 1 trigger 矩阵判断,v0.2 first cut 不启用——只写接口规格,具体字段层留口 v0.3+ 撞 trigger 时再补）
+- C 类真实 Target 仅做上车评估 + 接口定义,实际实例化留给 v0.3
+- meta 层只跑两维 hard（ADR 模板完整度 + 模板占位符替换成功率,见 `scripts/meta_check.sh`）,完整骨架不在 first cut 范围
 
 ### v0.3（C 类深耕）
 - C 类目标域为主战场
