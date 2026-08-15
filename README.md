@@ -11,8 +11,9 @@
 **A 类(SKILL.md / 单文件 config,硬指标主导)**:
 
 ```bash
-bash scripts/setup_demo_skill.sh         # 生成 A 类 SKILL.md demo target(幂等)
-bash scripts/setup_profiles.sh           # 创建 writer / judge hermes profile(需 hermes CLI)
+bash scripts/setup_demo.sh              # 生成 demo-target(config.yaml 默认 target_path,幂等)
+# 若目标是 SKILL.md 类,改用:bash scripts/setup_demo_skill.sh(生成 demo-skill-target)
+bash scripts/setup_profiles.sh          # 创建 writer / judge hermes profile(需 hermes CLI)
 bash scripts/run_loop.sh --config config.yaml --iterations 3
 ```
 
